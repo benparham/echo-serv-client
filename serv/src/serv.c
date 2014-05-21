@@ -58,13 +58,14 @@ void* listen_to_client(void *temp_args) {
 	pthread_exit(NULL);
 }
 
-static void handle_option(char *opt) {
+static int handle_option(char *opt) {
 	if (strcmp(opt, "-h") == 0) {
 		printf("Help Menu goes here\n");
-		return;
+		return 1;
 	}
 
 	printf("Unknown option specified\n");
+	return 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -74,7 +75,9 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
 			if (strncmp(argv[i], "-", 1) == 0) {
-				handle_option(argv[i]);
+				if (handle_option(argv[i])) {
+					return 1;
+				}
 			} else {
 				port_num = atoi(argv[i]);
 			}
