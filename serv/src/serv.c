@@ -13,56 +13,52 @@
 #include <assert.h>
 
 
-// #define BACKLOG 				10
+#define BACKLOG 				10
+
 #define HOST_LOOKUP_CMD 		"ifconfig | grep -P 'inet (?!127.0.0.1)'"
-
-// // Initialize all overhead
-// static int bootstrap() {
-
-// 	// Add other bootstraps to this with ||
-// 	if (varMapBootstrap()) {
-// 		return 1;
-// 	}
-
-// 	return 0;
-// }
-
-// static void cleanup() {
-// 	varMapCleanup();
-// }
+#define MAX_HOST_LEN			128
 
 
-void *listenToClient(void *tempArgs) {
+struct thread_args {
+	int socket_fd;
+};
 
-	// Setup global connection struct for thread
-	threadArgs *args = (threadArgs *) tempArgs;
-	connection *con;
-	if (connectionCreate(&con, args)) {
-		goto exit;
-	}
+void* listen_to_client(void *temp_args) {
 
-	// Begin command loop
-	int done = 0;
-	while (!done) {
-		if (connectionReceiveCommand(con)) {
-			done = connectionSendError(con);
-		} else {
-			if (executeCommand(con)) {//con->tbl, con->cmd, con->res, con->err)) {
-				done = connectionSendError(con);
-			} else {
-				done = connectionSendResponse(con);
-			}
-		}
-	}
+	// // Setup global connection struct for thread
+	// threadArgs *args = (threadArgs *) tempArgs;
+	// connection *con;
+	// if (connectionCreate(&con, args)) {
+	// 	goto exit;
+	// }
 
-	// Destroy thread's global connection struct
-	connectionDestroy(con);
+	// // Begin command loop
+	// int done = 0;
+	// while (!done) {
+	// 	if (connectionReceiveCommand(con)) {
+	// 		done = connectionSendError(con);
+	// 	} else {
+	// 		if (executeCommand(con)) {//con->tbl, con->cmd, con->res, con->err)) {
+	// 			done = connectionSendError(con);
+	// 		} else {
+	// 			done = connectionSendResponse(con);
+	// 		}
+	// 	}
+	// }
 
-exit:
+	// // Destroy thread's global connection struct
+	// connectionDestroy(con);
+
+	struct thread_args *args = (struct thread_args *) temp_args;
+
+	printf("Should listen to client here\n");
+
+// exit:
+	free(args);
 	pthread_exit(NULL);
 }
 
-static void handleOption(char *opt) {
+static void handle_option(char *opt) {
 	if (strcmp(opt, "-h") == 0) {
 		printf("Help Menu goes here\n");
 		return;
@@ -73,81 +69,69 @@ static void handleOption(char *opt) {
 
 int main(int argc, char *argv[]) {
 
-	// // Check optional args
-	// int portNumber;
-	// if (argc == 2) {
-	// 	portNumber = atoi(argv[1]);
-	// }
-	// else {
-	// 	// Obtain http service
-	// 	struct servent *serv  = getservbyname("http", "tcp");
-	// 	portNumber = htons(serv->s_port);
-	// 	endservent();
-	// }
-	
-	int portNumber = -1;
+	// Parse args and set port number to use
+	int port_num = -1;
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
 			if (strncmp(argv[i], "-", 1) == 0) {
-				handleOption(argv[i]);
+				handle_option(argv[i]);
 			} else {
-				portNumber = atoi(argv[i]);
+				port_num = atoi(argv[i]);
 			}
 		}
 	}
 
-	if (portNumber == -1) {
+	if (port_num == -1) {
 		// Obtain http service
 		struct servent *serv  = getservbyname("http", "tcp");
-		portNumber = htons(serv->s_port);
+		port_num = htons(serv->s_port);
 		endservent();
 	}
 
 	printf("Initiating Echo Server...\n\n");
 	
-	// struct servent *serv;
 	struct sockaddr_in addr;
 	
 	// Create socket
-	int sockListen = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sockListen < 0) {
+	int sock_listen = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock_listen < 0) {
 		printf("Failed to create listening socket\n");
 		return 1;
 	}
 	else {
-		printf("Created socket with file descriptor: %d\n", sockListen);
+		printf("Created socket with file descriptor: %d\n", sock_listen);
 	}
 	
 	// Setup the address (port number) to bind to
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = portNumber;
+	addr.sin_port = port_num;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	
 	// Bind the socket to the address
-	if (bind(sockListen, (struct sockaddr *) &addr, sizeof(addr)) == 0) {
+	if (bind(sock_listen, (struct sockaddr *) &addr, sizeof(addr)) == 0) {
 		printf("Successfully bound socket to port %d (%d)\n", ntohs(addr.sin_port), addr.sin_port);
 	}
 	else {
 		printf("Failed to bind socket to port %d\n", ntohs(addr.sin_port));
-		close(sockListen);
+		close(sock_listen);
 		return 1;
 	}
 	
 	// Listen on socket
-	if (listen(sockListen, BACKLOG) == 0) {
-		printf("Listening on socket %d\n", sockListen);
+	if (listen(sock_listen, BACKLOG) == 0) {
+		printf("Listening on socket %d\n", sock_listen);
 
 		// Get current hosting ip address
 		FILE *ptr = popen(HOST_LOOKUP_CMD, "r");
 		if (ptr != NULL) {
 			printf("Host(s): ");
 
-			char buf[BUFSIZE];
+			char buf[MAX_HOST_LEN];
 			char *success;
 			do {
-				memset(buf, 0, BUFSIZE);
-				success = fgets(buf, BUFSIZE, ptr);
+				memset(buf, 0, MAX_HOST_LEN);
+				success = fgets(buf, MAX_HOST_LEN, ptr);
 				if (buf != NULL) {
 					printf("%s", buf);
 				}
@@ -155,44 +139,36 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	else {
-		printf("Failed listen on socket %d\n", sockListen);
-		close(sockListen);
-		return 1;
-	}
-
-	// Run bootstrap for overhead initialization
-	if (bootstrap()) {
-		printf("Failed to initialize overhead in bootstrap\n");
-		close(sockListen);
+		printf("Failed to listen on socket %d\n", sock_listen);
+		close(sock_listen);
 		return 1;
 	}
 	
-	struct sockaddr clientAddress;
-	socklen_t addressLen;
+	struct sockaddr client_address;
+	socklen_t address_len;
 	
 	// Loop for accepting connections
 	printf("Ready for client connections...\n");
 	while (1) {
-		int sockAccept = accept(sockListen, &clientAddress, &addressLen);
-		if (sockAccept == -1) {
-			printf("Failed to accept connection on listening socket %d\n", sockListen);
+		int sock_accept = accept(sock_listen, &client_address, &address_len);
+		if (sock_accept == -1) {
+			printf("Failed to accept connection on listening socket %d\n", sock_listen);
 		}
 		else {
-			printf("Accepted new connection. Created socket with file descriptor: %d\n", sockAccept);
+			printf("Accepted new connection. Created socket with file descriptor: %d\n", sock_accept);
 
-			pthread_t newThread;
-			threadArgs *args = malloc(sizeof(threadArgs));
-			args->socketFD = sockAccept;
+			pthread_t new_thread;
+			struct thread_args *args = malloc(sizeof(struct thread_args));
+			args->socket_fd = sock_accept;
 
-			if (pthread_create(&newThread, NULL, listenToClient, (void *) args)) {
-				printf("Failed to create thread for connection with file descriptor: %d\n", sockAccept);
+			if (pthread_create(&new_thread, NULL, listen_to_client, (void *) args)) {
+				printf("Failed to create thread for connection with file descriptor: %d\n", sock_accept);
 			}
 		}
 	}
 	
 	// Cleanup
-	close(sockListen);
-	cleanup();
+	close(sock_listen);
 
 	return 0;
 }
