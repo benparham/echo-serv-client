@@ -10,7 +10,8 @@ BUILD_DIR = build
 CFLAGS = -g -Wall -std=c99 -I $(INCLUDE_DIR)
 
 # Header files
-INC = $(shell find $(INCLUDE_DIR) -type f -name '*.h')
+# INC = $(shell find $(INCLUDE_DIR) -type f -name '*.h')
+INC = 
 
 # Source files
 SERV_SRC = $(shell find $(SOURCE_DIR) -type f -name '*.c')

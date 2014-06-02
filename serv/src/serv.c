@@ -51,7 +51,22 @@ void* listen_to_client(void *temp_args) {
 
 	struct thread_args *args = (struct thread_args *) temp_args;
 
-	printf("Should listen to client here\n");
+	// Temporary, will be replaced with dataTransfer API calls
+	int magic_bufsize = 1024;
+	char buf[magic_bufsize];
+	int bytesReceived = magic_bufsize;
+
+	while (1) {		
+		memset(buf, 0, bytesReceived);
+
+		bytesReceived = recv(args->socket_fd, buf, magic_bufsize, 0);
+
+		if (bytesReceived < 1 || strcmp(buf, "exit") == 0) {
+			break;
+		} else {
+			printf("Received message '%s'\n", buf);
+		}
+	}
 
 // exit:
 	free(args);
