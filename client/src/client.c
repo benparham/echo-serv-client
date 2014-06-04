@@ -16,7 +16,7 @@
 #define MAX_INPUT 					1024
 #define MAX_RESPONSE				1024
 
-static void getInput(int socketFD) {
+static void getInput(int socket_fd) {
 
 	// Detect whether we are in interactive mode
 	int inAtty = isatty(0);
@@ -49,8 +49,14 @@ static void getInput(int socketFD) {
 			printf("%s", input);
 		}
 
-		printf("Should send message '%s' to server here\n", input);
-		
+		int len = strlen(input);
+		send(socket_fd, input, len, 0);
+
+		printf("Sent '%s' to server\n", input);
+
+		if (strcmp(input, "exit") == 0) {
+			break;
+		}
 	}
 
 	free(input);

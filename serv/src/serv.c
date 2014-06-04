@@ -25,30 +25,6 @@ struct thread_args {
 
 void* listen_to_client(void *temp_args) {
 
-	// // Setup global connection struct for thread
-	// threadArgs *args = (threadArgs *) tempArgs;
-	// connection *con;
-	// if (connectionCreate(&con, args)) {
-	// 	goto exit;
-	// }
-
-	// // Begin command loop
-	// int done = 0;
-	// while (!done) {
-	// 	if (connectionReceiveCommand(con)) {
-	// 		done = connectionSendError(con);
-	// 	} else {
-	// 		if (executeCommand(con)) {//con->tbl, con->cmd, con->res, con->err)) {
-	// 			done = connectionSendError(con);
-	// 		} else {
-	// 			done = connectionSendResponse(con);
-	// 		}
-	// 	}
-	// }
-
-	// // Destroy thread's global connection struct
-	// connectionDestroy(con);
-
 	struct thread_args *args = (struct thread_args *) temp_args;
 
 	// Temporary, will be replaced with dataTransfer API calls
@@ -61,10 +37,14 @@ void* listen_to_client(void *temp_args) {
 
 		bytesReceived = recv(args->socket_fd, buf, magic_bufsize, 0);
 
-		if (bytesReceived < 1 || strcmp(buf, "exit") == 0) {
+		if (bytesReceived < 1) {
 			break;
 		} else {
 			printf("Received message '%s'\n", buf);
+		}
+
+		if (strcmp(buf, "exit") == 0) {
+			break;
 		}
 	}
 
