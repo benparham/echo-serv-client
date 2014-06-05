@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <transfer.h>
+
 
 #define DEFAULT_TARGET_ADDRESS 		"127.0.0.1"
 
@@ -51,6 +53,8 @@ static void getInput(int socket_fd) {
 
 		int len = strlen(input);
 		send(socket_fd, input, len, 0);
+
+		tf_send(socket_fd, input, len);
 
 		printf("Sent '%s' to server\n", input);
 
