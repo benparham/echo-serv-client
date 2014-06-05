@@ -49,6 +49,8 @@ void* listen_to_client(void *temp_args) {
 	}
 
 // exit:
+	printf("Terminating client connection...\n");
+
 	free(args);
 	pthread_exit(NULL);
 }

@@ -34,15 +34,15 @@ static void getInput(int socket_fd) {
 			printf(">: ");
 		}
 		fgets(input, MAX_INPUT, stdin);
-		input = strtok(input, "\n");
+		char *temp_input = strtok(input, "\n");
 
-		if (strcmp(input, "") == 0) {
-			break;
-		}
-		if (strcmp(input, "\n") == 0) {
-			printf("\r");
+		if (temp_input == NULL ||
+			strcmp(temp_input, "") == 0 ||
+			strcmp(temp_input, "\n") == 0) {
 			continue;
 		}
+
+		input = temp_input;
 
 		// Display input if input is not from terminal but output is
 		if (!inAtty && outAtty) {
