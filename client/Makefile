@@ -1,4 +1,5 @@
 CC = gcc
+MAKE = make
 
 CLIENT = client
 
@@ -6,12 +7,7 @@ INCLUDE_DIR = include
 LIB_DIR = lib
 SOURCE_DIR = src
 BUILD_DIR = build
-
-# Create hard links to transfer.h and libtransfer.a if they don't already exist
 TRANSFER_DIR = ../transfer
-TRANSFER_INCLUDE_DIR = $(TRANSFER_DIR)/include
-$(shell ln $(TRANSFER_INCLUDE_DIR)/transfer.h $(INCLUDE_DIR)/transfer.h &> /dev/null)
-$(shell ln $(TRANSFER_DIR)/libtransfer.a $(LIB_DIR)/libtransfer.a &> /dev/null)
 
 # Flags
 CFLAGS = -g -Wall -std=c99 -I $(INCLUDE_DIR) -L $(LIB_DIR)
@@ -33,16 +29,20 @@ OBJ = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
 
 all: $(CLIENT)
 
-$(CLIENT): $(OBJ) $(LIBS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIB)
+$(CLIENT): transfer $(OBJ) $(LIB)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB)
 #$(addprefix -l ,$(LIB))
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c $(INC)
 	@mkdir -p $(dir $@)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+transfer:
+	@cd $(TRANSFER_DIR) && $(MAKE)
+
 clean:
 	@rm -rf $(BUILD_DIR)
 	@rm -f $(CLIENT)
+	@cd $(TRANSFER_DIR) && $(MAKE) clean
 
 ###############################

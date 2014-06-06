@@ -12,6 +12,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include <transfer.h>
+
 #define BACKLOG 				10
 
 #define HOST_LOOKUP_CMD 		"ifconfig | grep -P 'inet (?!127.0.0.1)'"
@@ -35,6 +37,10 @@ void* listen_to_client(void *temp_args) {
 		memset(buf, 0, bytesReceived);
 
 		bytesReceived = recv(args->socket_fd, buf, magic_bufsize, 0);
+
+		void *new_buf;
+		size_t new_len;
+		tf_recv(args->socket_fd, &new_buf, &new_len);
 
 		if (bytesReceived < 1) {
 			break;
