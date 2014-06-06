@@ -28,33 +28,22 @@ void* listen_to_client(void *temp_args) {
 
 	struct thread_args *args = (struct thread_args *) temp_args;
 
-	// Temporary, will be replaced with dataTransfer API calls
-	int magic_bufsize = 1024;
-	char buf[magic_bufsize];
-	int bytesReceived = magic_bufsize;
+	void *buf = NULL;
 
 	while (1) {		
-		memset(buf, 0, bytesReceived);
 
-		bytesReceived = recv(args->socket_fd, buf, magic_bufsize, 0);
+		int size_bytes;
+		tf_recv(args->socket_fd, &buf, &size_bytes);
 
-		void *new_buf;
-		size_t new_len;
-		tf_recv(args->socket_fd, &new_buf, &new_len);
-
-		if (bytesReceived < 1) {
-			break;
-		} else {
-			printf("Received message '%s'\n", buf);
-		}
-
-		if (strcmp(buf, "exit") == 0) {
-			break;
-		}
+		printf("Received message: '%s'\n", (char *) buf);
 	}
 
 // exit:
 	printf("Terminating client connection...\n");
+
+	if (buf != NULL) {
+		free(buf);
+	}
 
 	free(args);
 	pthread_exit(NULL);

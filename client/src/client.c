@@ -52,7 +52,7 @@ static void getInput(int socket_fd) {
 		}
 
 		int len = strlen(input);
-		send(socket_fd, input, len, 0);
+		// send(socket_fd, input, len, 0);
 
 		tf_send(socket_fd, input, len);
 
