@@ -51,12 +51,12 @@ static void getInput(int socket_fd) {
 			printf("%s", input);
 		}
 
-		int len = strlen(input);
-		// send(socket_fd, input, len, 0);
-
-		tf_send(socket_fd, input, len);
-
-		printf("Sent '%s' to server\n", input);
+		int size_bytes = strlen(input) + 1;
+		if (tf_send(socket_fd, input, size_bytes)) {
+			printf("Failed to send '%s' to server\n", input);
+		} else {
+			printf("Sent '%s' to server\n", input);
+		}
 
 		if (strcmp(input, "exit") == 0) {
 			break;

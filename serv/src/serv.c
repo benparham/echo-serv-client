@@ -30,12 +30,20 @@ void* listen_to_client(void *temp_args) {
 
 	void *buf = NULL;
 
-	while (1) {		
+	while (1) {
 
-		int size_bytes;
-		tf_recv(args->socket_fd, &buf, &size_bytes);
-
-		printf("Received message: '%s'\n", (char *) buf);
+		size_t size_bytes;
+		int term = 0;
+		if (tf_recv(args->socket_fd, &buf, &size_bytes, &term)) {
+			if (term == 1) {
+				printf("Client has quit\n");
+				break;
+			} else {
+				printf("Error in receiving message\n");
+			}
+		} else {
+			printf("Received message: '%s'\n", (char *) buf);
+		}
 	}
 
 // exit:
