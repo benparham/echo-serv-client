@@ -1,0 +1,3 @@
+[submodule "modules/options"]
+	path = modules/options
+	url = git@github.com:benparham/c-option-parser.git

@@ -7,6 +7,7 @@ INCLUDE_DIR = include
 LIB_DIR = lib
 SOURCE_DIR = src
 BUILD_DIR = build
+MODULE_DIR = ../modules
 TRANSFER_DIR = ../transfer
 
 # Flags
@@ -24,6 +25,8 @@ SRC = $(shell find $(SOURCE_DIR) -type f -name '*.c')
 # Object files
 OBJ = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
 
+$(INC) = $(INC) $(shell find $(MODULE_DIR) -type f -name '*.h')
+$(LIB) = $(LIB) $(shell find $(MODULE_DIR) -type f -name '*.a')
 
 # Rules #######################
 
