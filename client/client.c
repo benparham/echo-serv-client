@@ -14,6 +14,7 @@
 #include <option-parser.h>
 
 
+#define MAX_TARGET_ADDRESS_LEN		128
 #define DEFAULT_TARGET_ADDRESS 		"127.0.0.1"
 
 #define MAX_INPUT 					1024
@@ -68,16 +69,6 @@ static void getInput(int socket_fd) {
 	free(response);
 }
 
-// static int handle_option(char *opt) {
-// 	if (strcmp(opt, "-h") == 0) {
-// 		printf("Help Menu goes here\n");
-// 		return 1;
-// 	}
-
-// 	printf("Unknown option specified\n");
-// 	return 1;
-// }
-
 static int help(void *native_args, int num_user_args, char **user_args) {
 	assert(native_args == NULL);
 
@@ -86,7 +77,9 @@ static int help(void *native_args, int num_user_args, char **user_args) {
 		return 1;
 	}
 
-	printf("Help goes here\n");
+	printf("Usage:\n");
+	printf("-h\t\t\t -> help menu\n");
+	printf("-a <target address>\t -> specify target server address\n");
 
 	return 1;
 }
@@ -97,8 +90,7 @@ static int set_target_address(void *native_args, int num_user_args, char **user_
 		return 1;
 	}
 
-	char *target_address = (char *) native_args;
-	target_address = user_args[0];
+	*((char **) native_args) = user_args[0];
 
 	return 0;
 }
@@ -106,28 +98,10 @@ static int set_target_address(void *native_args, int num_user_args, char **user_
 
 int main(int argc, char *argv[]) {
 	
-	// // Parse args and set target address
-	// char *target_address = NULL;
-	// if (argc > 1) {
-	// 	for (int i = 1; i < argc; i++) {
-	// 		if (strncmp(argv[i], "-", 1) == 0) {
-	// 			if (handle_option(argv[i])) {
-	// 				return 1;
-	// 			}
-	// 		} else {
-	// 			target_address = argv[1];
-	// 		}
-	// 	}
-	// }
-
-	// if (target_address == NULL) {
-	// 	target_address = DEFAULT_TARGET_ADDRESS;
-	// }
-
 	char *target_address = DEFAULT_TARGET_ADDRESS;
 	opt_item items[] = {
 		{NULL, 0, "-h", &help},
-		{target_address, 1, "-a", &set_target_address}
+		{&target_address, 1, "-a", &set_target_address}
 	};
 	opt_parser parser = {.num_opts = 2, .items = items};
 
