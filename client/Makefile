@@ -1,48 +1,42 @@
 CC = gcc
-MAKE = make
 
-CLIENT = client
+MODULES_DIR = ../modules
 
-INCLUDE_DIR = include
-LIB_DIR = lib
-SOURCE_DIR = src
-BUILD_DIR = build
-TRANSFER_DIR = ../transfer
+TARGET = client
 
-# Flags
-CFLAGS = -g -Wall -std=c99 -I $(INCLUDE_DIR) -L $(LIB_DIR)
+INC = $(shell find $(MODULES_DIR) -type f -name '*.h')
+LIB = $(shell find $(MODULES_DIR) -type f -name '*.a')
+SRC = client.c
+OBJ = client.o
 
-# Header files
-INC = $(shell find $(INCLUDE_DIR) -type f -name '*.h')
-
-# Library files
-LIB = $(shell find $(LIB_DIR) -type f -name '*.a')
-
-# Source files
-SRC = $(shell find $(SOURCE_DIR) -type f -name '*.c')
-
-# Object files
-OBJ = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
+CFLAGS = -g -Wall -std=c99
+INCFLAGS = -I $(MODULES_DIR)/options -I $(MODULES_DIR)/transfer
+LIBFLAGS = -L $(MODULES_DIR)/options -loptions -L $(MODULES_DIR)/transfer -ltransfer
 
 
 # Rules #######################
 
-all: $(CLIENT)
+all: modules $(TARGET)
 
-$(CLIENT): transfer $(OBJ) $(LIB)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB)
-#$(addprefix -l ,$(LIB))
+# Makes all modules
+modules:
+	@for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR &> /dev/null && make; \
+		popd &> /dev/null; \
+	done
 
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c $(INC)
-	@mkdir -p $(dir $@)
-	$(CC) -c -o $@ $< $(CFLAGS)
+# Makes the client executable
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $(LIBFLAGS) -o $@ $^
 
-transfer:
-	@cd $(TRANSFER_DIR) && $(MAKE)
+# Makes the client object files
+$(OBJ): $(SRC) $(INC) $(LIB)
+	$(CC) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
 
 clean:
-	@rm -rf $(BUILD_DIR)
-	@rm -f $(CLIENT)
-	@cd $(TRANSFER_DIR) && $(MAKE) clean
-
-###############################
+	@for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR &> /dev/null && make clean; \
+		popd &> /dev/null; \
+	done
+	@rm $(TARGET)
+	@rm $(OBJ)

@@ -11,8 +11,6 @@ OBJ = serv.o
 
 CFLAGS = -g -Wall -std=c99
 INCFLAGS = -I $(MODULES_DIR)/options -I $(MODULES_DIR)/transfer
-
-# Add modules to lib path
 LIBFLAGS = -L $(MODULES_DIR)/options -loptions -L $(MODULES_DIR)/transfer -ltransfer
 
 
