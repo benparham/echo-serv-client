@@ -1,50 +1,42 @@
 CC = gcc
-MAKE = make
 
-SERV = serv
+MODULES_DIR = ../modules
+# include $(shell find $(MODULES_DIR) -type f -name Makefile)
 
-INCLUDE_DIR = include
-LIB_DIR = lib
-SOURCE_DIR = src
-BUILD_DIR = build
-MODULE_DIR = ../modules
-TRANSFER_DIR = ../transfer
+TARGET = serv
 
-# Flags
-CFLAGS = -g -Wall -std=c99 -I $(INCLUDE_DIR) -L $(LIB_DIR)
+INC = $(shell find $(MODULES_DIR) -type f -name '*.h')
+LIB = $(shell find $(MODULES_DIR) -type f -name '*.a')
+SRC = serv.c
+OBJ = serv.o
 
-# Header files
-INC = $(shell find $(INCLUDE_DIR) -type f -name '*.h')
+CFLAGS = -g -Wall -std=c99
+INCFLAGS = -I $(MODULES_DIR)/options -I $(MODULES_DIR)/transfer
 
-# Library files
-LIB = $(shell find $(LIB_DIR) -type f -name '*.a')
+# Add modules to lib path
+LIBFLAGS = -L $(MODULES_DIR)/options -loptions -L $(MODULES_DIR)/transfer -ltransfer
 
-# Source files
-SRC = $(shell find $(SOURCE_DIR) -type f -name '*.c')
-
-# Object files
-OBJ = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
-
-$(INC) = $(INC) $(shell find $(MODULE_DIR) -type f -name '*.h')
-$(LIB) = $(LIB) $(shell find $(MODULE_DIR) -type f -name '*.a')
 
 # Rules #######################
 
-all: $(SERV)
+all: modules $(TARGET)
 
-$(SERV): transfer $(OBJ) $(LIB)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB)
+modules:
+	for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR && make; \
+		popd; \
+	done
 
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c $(INC)
-	@mkdir -p $(dir $@)
-	$(CC) -c -o $@ $< $(CFLAGS)
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $(LIBFLAGS) -o $@ $^
 
-transfer:
-	@cd $(TRANSFER_DIR) && $(MAKE)
+$(OBJ): $(SRC) $(INC) $(LIB)
+	$(CC) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
 
 clean:
-	@rm -rf $(BUILD_DIR)
-	@rm -f $(SERV)
-	@cd $(TRANSFER_DIR) && $(MAKE) clean
-
-###############################
+	for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR && make clean; \
+		popd; \
+	done
+	@rm $(TARGET)
+	@rm $(OBJ)
