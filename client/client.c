@@ -181,6 +181,8 @@ int main(int argc, char *argv[]) {
 			goto cleanup_socket;
 		}
 
+		printf("file bytes = %d\n", file_bytes);
+
 		if (tf_send_file(socket_fd, fp, 0, file_bytes)) {
 			printf("Failed to send file\n");
 			goto cleanup_socket;
