@@ -1,7 +1,6 @@
 CC = gcc
 
 MODULES_DIR = ../modules
-# include $(shell find $(MODULES_DIR) -type f -name Makefile)
 
 TARGET = serv
 
@@ -21,15 +20,18 @@ LIBFLAGS = -L $(MODULES_DIR)/options -loptions -L $(MODULES_DIR)/transfer -ltran
 
 all: modules $(TARGET)
 
+# Makes all modules
 modules:
 	@for DIR in $(MODULES_DIR)/*/; do \
 		pushd $$DIR &> /dev/null && make; \
 		popd &> /dev/null; \
 	done
 
+# Makes the server executable
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(LIBFLAGS) -o $@ $^
 
+# Makes the server object files
 $(OBJ): $(SRC) $(INC) $(LIB)
 	$(CC) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
 
