@@ -95,23 +95,41 @@ static int set_target_address(void *native_args, int num_user_args, char **user_
 	return 0;
 }
 
+static int set_file(void *native_args, int num_user_args, char **user_args) {
+	if (num_user_args != 1) {
+		printf("Invalid number of arguments\n");
+		return 1;
+	}
+
+	char *filename = user_args[0];
+
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		printf("Unable to open file: '%s'\n", filename);
+		return 1;
+	}
+
+	*((FILE **) native_args) = fp;
+
+	return 0;
+}
+
 
 int main(int argc, char *argv[]) {
 	
 	char *target_address = DEFAULT_TARGET_ADDRESS;
+	FILE *fp = NULL;
+
 	opt_item items[] = {
 		{NULL, 0, "-h", &help},
-		{&target_address, 1, "-a", &set_target_address}
+		{&target_address, 1, "-a", &set_target_address},
+		{&fp, 1, "-f", &set_file}
 	};
-	opt_parser parser = {.num_opts = 2, .items = items};
+	opt_parser parser = {.num_opts = 3, .items = items};
 
 	if (opt_parse(argc, argv, &parser)) {
-		return 1;
+		goto exit;
 	}
-
-	printf("Target address = %s\n", target_address);
-
-	return 0;
 
 	printf("Initiating Simple Messaging Client...\n");
 	
@@ -126,7 +144,7 @@ int main(int argc, char *argv[]) {
 	int socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (socket_fd == -1) {
 		printf("Failed to create socket\n");
-		return 0;
+		goto cleanup_file;
 	}
 	else {
 		printf("Created socket with file descriptor: %d\n", socket_fd);
@@ -138,8 +156,7 @@ int main(int argc, char *argv[]) {
 	endservent();	 // closes etc/services
 	if (inet_pton(AF_INET, target_address, &addr.sin_addr) != 1) {
 		printf("Failed to convert string %s to a network address\n", target_address);
-		close(socket_fd);
-		return 0;
+		goto cleanup_socket;
 	}
 	
 	// Connect to address
@@ -149,17 +166,45 @@ int main(int argc, char *argv[]) {
 	}
 	else {
 		printf("Failed to connect to address %s\n", target_address);
-		close(socket_fd);
-		return 0;
+		goto cleanup_socket;
 	}
 
 	printf("\n");
 
-	getInput(socket_fd);
+	if (fp != NULL) {
+		printf("Sending file to server\n");
+
+		int file_bytes;
+		if (fseek(fp, 0, SEEK_END) == -1 ||
+			(file_bytes = ftell(fp)) == -1) {
+			printf("Failed to seek in file\n");
+			goto cleanup_socket;
+		}
+
+		if (tf_send_file(socket_fd, fp, 0, file_bytes)) {
+			printf("Failed to send file\n");
+			goto cleanup_socket;
+		}
+
+		// Cleanup file
+		fclose(fp);
+	} else {
+		getInput(socket_fd);
+	}
 	
 	// Cleanup socket
+	printf("Closing socket %d\n", socket_fd);
 	close(socket_fd);
-	printf("Closed socket %d\n", socket_fd);
 	
 	return 0;
+
+cleanup_socket:
+	printf("Closing socket %d\n", socket_fd);
+	close(socket_fd);
+cleanup_file:
+	if (fp != NULL) {
+		fclose(fp);
+	}
+exit:
+	return 1;
 }
