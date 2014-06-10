@@ -1,0 +1,6 @@
+[submodule "modules/options"]
+	path = modules/options
+	url = git@github.com:benparham/c-option-parser.git
+[submodule "modules/transfer"]
+	path = modules/transfer
+	url = git@github.com:benparham/dataTransfer.git
