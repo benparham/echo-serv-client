@@ -11,6 +11,7 @@
 #include <assert.h>
 
 #include <transfer.h>
+#include <option-parser.h>
 
 
 #define DEFAULT_TARGET_ADDRESS 		"127.0.0.1"
@@ -67,35 +68,76 @@ static void getInput(int socket_fd) {
 	free(response);
 }
 
-static int handle_option(char *opt) {
-	if (strcmp(opt, "-h") == 0) {
-		printf("Help Menu goes here\n");
+// static int handle_option(char *opt) {
+// 	if (strcmp(opt, "-h") == 0) {
+// 		printf("Help Menu goes here\n");
+// 		return 1;
+// 	}
+
+// 	printf("Unknown option specified\n");
+// 	return 1;
+// }
+
+static int help(void *native_args, int num_user_args, char **user_args) {
+	assert(native_args == NULL);
+
+	if (num_user_args != 0) {
+		printf("Invalid number of arguments\n");
 		return 1;
 	}
 
-	printf("Unknown option specified\n");
+	printf("Help goes here\n");
+
 	return 1;
 }
 
-int main(int argc, char *argv[]) {
-	
-	// Parse args and set target address
-	char *target_address = NULL;
-	if (argc > 1) {
-		for (int i = 1; i < argc; i++) {
-			if (strncmp(argv[i], "-", 1) == 0) {
-				if (handle_option(argv[i])) {
-					return 1;
-				}
-			} else {
-				target_address = argv[1];
-			}
-		}
+static int set_target_address(void *native_args, int num_user_args, char **user_args) {
+	if (num_user_args != 1) {
+		printf("Invalid number of arguments\n");
+		return 1;
 	}
 
-	if (target_address == NULL) {
-		target_address = DEFAULT_TARGET_ADDRESS;
+	char *target_address = (char *) native_args;
+	target_address = user_args[0];
+
+	return 0;
+}
+
+
+int main(int argc, char *argv[]) {
+	
+	// // Parse args and set target address
+	// char *target_address = NULL;
+	// if (argc > 1) {
+	// 	for (int i = 1; i < argc; i++) {
+	// 		if (strncmp(argv[i], "-", 1) == 0) {
+	// 			if (handle_option(argv[i])) {
+	// 				return 1;
+	// 			}
+	// 		} else {
+	// 			target_address = argv[1];
+	// 		}
+	// 	}
+	// }
+
+	// if (target_address == NULL) {
+	// 	target_address = DEFAULT_TARGET_ADDRESS;
+	// }
+
+	char *target_address = DEFAULT_TARGET_ADDRESS;
+	opt_item items[] = {
+		{NULL, 0, "-h", &help},
+		{target_address, 1, "-a", &set_target_address}
+	};
+	opt_parser parser = {.num_opts = 2, .items = items};
+
+	if (opt_parse(argc, argv, &parser)) {
+		return 1;
 	}
+
+	printf("Target address = %s\n", target_address);
+
+	return 0;
 
 	printf("Initiating Simple Messaging Client...\n");
 	
