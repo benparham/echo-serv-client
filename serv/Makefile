@@ -22,9 +22,9 @@ LIBFLAGS = -L $(MODULES_DIR)/options -loptions -L $(MODULES_DIR)/transfer -ltran
 all: modules $(TARGET)
 
 modules:
-	for DIR in $(MODULES_DIR)/*/; do \
-		pushd $$DIR && make; \
-		popd; \
+	@for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR &> /dev/null && make; \
+		popd &> /dev/null; \
 	done
 
 $(TARGET): $(OBJ)
@@ -34,9 +34,9 @@ $(OBJ): $(SRC) $(INC) $(LIB)
 	$(CC) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
 
 clean:
-	for DIR in $(MODULES_DIR)/*/; do \
-		pushd $$DIR && make clean; \
-		popd; \
+	@for DIR in $(MODULES_DIR)/*/; do \
+		pushd $$DIR &> /dev/null && make clean; \
+		popd &> /dev/null; \
 	done
 	@rm $(TARGET)
 	@rm $(OBJ)
