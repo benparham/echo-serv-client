@@ -19,6 +19,9 @@
 #define HOST_LOOKUP_CMD 		"ifconfig | grep -P 'inet (?!127.0.0.1)'"
 #define MAX_HOST_LEN			128
 
+#define MAX_ECHO_SIZE_BYTES		128
+#define STORAGE_FILE_NAME		"messages.txt"
+
 
 struct thread_args {
 	int socket_fd;
@@ -29,12 +32,19 @@ void* listen_to_client(void *temp_args) {
 	struct thread_args *args = (struct thread_args *) temp_args;
 
 	void *buf = NULL;
+	FILE *fp = fopen(STORAGE_FILE_NAME, "w");
+	if (fp == NULL) {
+		printf("Unable to open file %s\n", STORAGE_FILE_NAME);
+		goto exit;
+	}
 
 	while (1) {
 
 		size_t size_bytes;
 		int term = 0;
-		if (tf_recv(args->socket_fd, &buf, &size_bytes, &term)) {
+		int is_file = 0;
+		// if (tf_recv(args->socket_fd, &buf, &size_bytes, &term)) {
+		if (tf_recv_mixed(args->socket_fd, MAX_ECHO_SIZE_BYTES, &buf, &size_bytes, fp, &term, &is_file)) {
 			if (term == 1) {
 				printf("Client has quit\n");
 				break;
@@ -42,18 +52,29 @@ void* listen_to_client(void *temp_args) {
 				printf("Error in receiving message\n");
 			}
 		} else {
-			printf("Received message: '%s'\n", (char *) buf);
+			if (!is_file) {
+				printf("Received message: '%s'\n", (char *) buf);
+			} else {
+				printf("Message received and stored in file\n");
+			}
 		}
 	}
 
-// exit:
+
 	printf("Terminating client connection...\n");
 
+	// Close file
+	fclose(fp);
+
+	// Free buffer if necessary
 	if (buf != NULL) {
 		free(buf);
 	}
 
+exit:
+	// Free args
 	free(args);
+	// Terminate thread
 	pthread_exit(NULL);
 }
 

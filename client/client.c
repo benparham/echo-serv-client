@@ -80,6 +80,7 @@ static int help(void *native_args, int num_user_args, char **user_args) {
 	printf("Usage:\n");
 	printf("-h\t\t\t -> help menu\n");
 	printf("-a <target address>\t -> specify target server address\n");
+	printf("-f <file path>\t -> send file to server\n");
 
 	return 1;
 }
