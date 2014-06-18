@@ -20,7 +20,7 @@
 #define MAX_HOST_LEN			128
 
 #define MAX_ECHO_SIZE_BYTES		128
-#define STORAGE_FILE_NAME		"messages.txt"
+#define DEFAULT_FILE_NAME		"messages.txt"
 
 
 struct thread_args {
@@ -32,9 +32,9 @@ void* listen_to_client(void *temp_args) {
 	struct thread_args *args = (struct thread_args *) temp_args;
 
 	void *buf = NULL;
-	FILE *fp = fopen(STORAGE_FILE_NAME, "w");
+	FILE *fp = fopen(DEFAULT_FILE_NAME, "w");
 	if (fp == NULL) {
-		printf("Unable to open file %s\n", STORAGE_FILE_NAME);
+		printf("Unable to open file %s\n", DEFAULT_FILE_NAME);
 		goto exit;
 	}
 
